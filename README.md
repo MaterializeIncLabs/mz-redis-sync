@@ -18,10 +18,10 @@ inconsistency is critical for delivering a seamless user experience.
 
 Materialize is not just a database; it’s an operational data store designed for real-time data processing. It allows you to maintain complex, incrementally updated views of your data, making it an ideal backbone for modern, data-intensive applications. Here’s why Materialize is central to solving the cache invalidation problem:
 
-* Incremental View Maintenance: Materialize continuously updates views as new data arrives, allowing you to maintain up-to-the-moment results without costly recomputations.
-* Complex Query Support: Materialize can handle arbitrarily complex SQL queries, including joins, aggregations, and subqueries, and maintain these as materialized views. This ensures that even the most intricate data transformations are instantly reflected in your cache.
-* Low-Latency Data Processing: Designed to process data with minimal latency, Materialize ensures that updates are propagated to your cache almost instantaneously, maintaining data consistency across your systems.
-* Operational Scalability: Materialize is built to handle high-throughput workloads, making it capable of scaling with your application’s data needs without compromising performance.
+* **Incremental View Maintenance**: Materialize continuously updates views as new data arrives, allowing you to maintain up-to-the-moment results without costly recomputations.
+* **Complex Query Support**: Materialize can handle arbitrarily complex SQL queries, including multi-way joins, aggregations, subqueries, even recursive SQL, and maintain these as materialized views. This ensures that even the most intricate data transformations are instantly reflected in your cache.
+* **Low-Latency Data Processing**: Designed to process data with minimal latency, Materialize ensures that updates are propagated to your cache almost instantaneously, maintaining data consistency across your systems.
+* **Operational Scalability**: Materialize is built to handle high-throughput workloads, making it capable of scaling with your application’s data needs without compromising performance.
 
 ## Our Solution
 
