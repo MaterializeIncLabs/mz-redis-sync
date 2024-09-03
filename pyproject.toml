@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "mz-redis-sync"
+version = "0.1.0"
+description = "A Python application using Materialize durable subscriptions to keep Redis cache up to date."
+authors = ["Seth Wiesman <seth@materialize.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+redis = "^5.0.8"
+logging = "^0.4.9.6"
+pyyaml = "^6.0.2"
+psycopg2 = "^2.9.9"
+tenacity = "^9.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

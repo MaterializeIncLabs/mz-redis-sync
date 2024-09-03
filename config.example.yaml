@@ -1,0 +1,13 @@
+materialize:
+  host: your-mz-host
+  port: 6875
+  user: your-username
+  password: your-password
+  database: your-database
+  sql: "SELECT key, value FROM your_view"
+
+redis:
+  host: your-redis-host
+  port: 6379
+  db: 0
+  mz_timestamp_key: mz_latest_timestamp
