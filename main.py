@@ -140,7 +140,7 @@ def validate_sql_columns(conn: psycopg2.extensions.connection, sql_query: str) -
     """Validate that the SQL query returns exactly two columns named 'key' and 'value' with appropriate types."""
     try:
         with conn.cursor() as cur:
-            cur.execute(f"SELECT * FROM ({sql_query}) LIMIT 0")
+            cur.execute(f"SELECT * FROM ({sql_query}) WHERE FALSE LIMIT 0")
             colnames = [desc.name for desc in cur.description]
             coltypes = [desc.type_code for desc in cur.description]
 
