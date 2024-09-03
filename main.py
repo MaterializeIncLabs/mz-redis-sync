@@ -127,13 +127,12 @@ def connect_to_materialize(config: Config.MaterializeConfig) -> psycopg2.extensi
     return conn
 
 
-def build_subscribe_statement(sql: str, latest_timestamp: Optional[int]) -> str:
+def build_subscribe_statement(sql: str, ts: Optional[int]) -> str:
     """Create a SQL SUBSCRIBE statement with an optional timestamp."""
-    statement = f"DECLARE c CURSOR FOR SUBSCRIBE ({sql}) WITH (SNAPSHOT, PROGRESS)"
-    if latest_timestamp:
-        statement += f" AS OF {latest_timestamp}"
-
-    return statement + " ENVELOPE UPSERT (KEY (key))"
+    if ts:
+        return f"DECLARE c CURSOR FOR SUBSCRIBE ({sql}) WITH (PROGRESS) AS OF {ts} ENVELOPE UPSERT (KEY (key))"
+    else:
+        return f"DECLARE c CURSOR FOR SUBSCRIBE ({sql}) WITH (SNAPSHOT, PROGRESS) ENVELOPE UPSERT (KEY (key))"
 
 
 def validate_sql_columns(conn: psycopg2.extensions.connection, sql_query: str) -> None:
