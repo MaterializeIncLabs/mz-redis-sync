@@ -137,19 +137,42 @@ def build_subscribe_statement(sql: str, latest_timestamp: Optional[int]) -> str:
 
 
 def validate_sql_columns(conn: psycopg2.extensions.connection, sql_query: str) -> None:
-    """Validate that the SQL query returns exactly two columns named 'key' and 'value' of type 'text'."""
+    """Validate that the SQL query returns exactly two columns named 'key' and 'value' with appropriate types."""
     try:
         with conn.cursor() as cur:
-            cur.execute(f"{sql_query} LIMIT 0")
+            cur.execute(f"SELECT * FROM ({sql_query}) LIMIT 0")
             colnames = [desc.name for desc in cur.description]
             coltypes = [desc.type_code for desc in cur.description]
 
-            if len(colnames) != 2 or colnames != ['key', 'value']:
-                raise ValueError("The query must return exactly two columns named 'key' and 'value'.")
-            if not all(coltype in [psycopg2.STRING, psycopg2.NUMBER, psycopg2.BINARY] for coltype in coltypes):
-                raise ValueError("'key' and 'value' columns must be of type TEXT, INT, BIGINT, NUMERIC, or BINARY.")
+            required_columns = {'key', 'value'}
+            returned_columns = set(colnames)
 
-            logger.info("SQL query validation passed: Columns are 'key' and 'value', both of type 'text'.")
+            if len(colnames) != 2:
+                extra_columns = returned_columns - required_columns
+                raise ValueError(
+                    f"Expected exactly two columns, 'key' and 'value'. "
+                    f"Found {len(colnames)} columns: {', '.join(colnames)}. "
+                    f"Extra columns: {', '.join(extra_columns)}"
+                )
+
+            missing_columns = required_columns - returned_columns
+            if missing_columns:
+                raise ValueError(
+                    f"Missing required columns: {', '.join(missing_columns)}. "
+                    f"Found columns: {', '.join(colnames)}."
+                )
+
+            type_errors = []
+            for colname, coltype in zip(colnames, coltypes):
+                if colname in required_columns:
+                    if coltype not in [psycopg2.STRING, psycopg2.NUMBER, psycopg2.BINARY]:
+                        type_errors.append(f"'{colname}' has an invalid type: {coltype}")
+
+            if type_errors:
+                raise TypeError(f"Column type errors: {', '.join(type_errors)}")
+
+            logger.info("SQL query validation passed: Columns are 'key' and 'value' with valid types.")
+
     except Exception as e:
         logger.error(f"SQL validation failed: {e}")
         raise
