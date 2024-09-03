@@ -180,6 +180,12 @@ def validate_sql_columns(conn: psycopg2.extensions.connection, sql_query: str) -
 
 def main():
     config = Config("config.yaml")
+    if config.redis.mz_timestamp_key is None:
+        logger.warning(
+            "No mz_timestamp_key provided. mz-redis-sync will not support graceful restarts, "
+            "leading to full data reconsumption on recovery. This mode may increase Redis load "
+            "and could miss deletes in certain scenarios."
+        )
 
     redis_client = RedisClient(config.redis)
     logger.info("Connected to Redis.")
