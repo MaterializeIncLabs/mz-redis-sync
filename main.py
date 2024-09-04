@@ -120,7 +120,12 @@ def connect_to_materialize(config: Config.MaterializeConfig) -> psycopg2.extensi
         user=config.user,
         password=config.password,
         dbname=config.database,
-        cursor_factory=RealDictCursor
+        cursor_factory=RealDictCursor,
+        application_name="mz-redis-sync",
+        ## psycopg2 does not make it easy to redirect the welcome
+        ## notice to our logger. So instead, we disable it and manually
+        ## log important details.
+        options="--welcome_message=off"
     )
 
     conn.autocommit = True
@@ -163,9 +168,8 @@ def validate_sql_columns(conn: psycopg2.extensions.connection, sql_query: str) -
 
             type_errors = []
             for colname, coltype in zip(colnames, coltypes):
-                if colname in required_columns:
-                    if coltype not in [psycopg2.STRING, psycopg2.NUMBER, psycopg2.BINARY]:
-                        type_errors.append(f"'{colname}' has an invalid type: {coltype}")
+                if coltype not in [psycopg2.STRING, psycopg2.NUMBER, psycopg2.BINARY]:
+                    type_errors.append(f"'{colname}' has an invalid type: {coltype}")
 
             if type_errors:
                 raise TypeError(f"Column type errors: {', '.join(type_errors)}")
@@ -190,7 +194,17 @@ def main():
     logger.info("Connected to Redis.")
 
     mz_conn = connect_to_materialize(config.materialize)
-    logger.info("Connected to Materialize.")
+    with mz_conn.cursor() as cur:
+        cur.execute("SELECT mz_environment_id(), current_database(), current_schema(), current_role()")
+        metadata = cur.fetchone()
+        cur.execute("SHOW CLUSTER")
+        cluster = cur.fetchone()
+        logger.info(
+            f"Connected to Materialize Environment {metadata['mz_environment_id']} "
+            f"using role {metadata['current_role']}")
+        logger.info(
+            f"Using Materialize database {metadata['current_database']} "
+            f"and schema {metadata['current_schema']} on cluster {cluster['cluster']}")
 
     validate_sql_columns(mz_conn, config.materialize.sql)
 
