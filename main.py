@@ -78,6 +78,7 @@ class Config:
 class RedisClient:
     def __init__(self, config: Config.RedisConfig):
         self.client = redis.StrictRedis(host=config.host, port=config.port, db=config.db, decode_responses=True)
+        self.pipeline = self.client.pipeline()
         self.mz_timestamp_key = config.mz_timestamp_key
         self.key_prefix = config.key_prefix
 
@@ -89,10 +90,12 @@ class RedisClient:
             return timestamp
         return None
 
-    def set_latest_timestamp(self, mz_timestamp: Optional[int]) -> None:
+    def set_latest_timestamp(self, mz_timestamp: int) -> None:
         """Store the latest mz_timestamp in Redis."""
         if self.mz_timestamp_key is not None:
-            self.client.set(self.mz_timestamp_key, mz_timestamp)
+            self.pipeline.set(self.mz_timestamp_key, mz_timestamp)
+        self.pipeline.execute()
+        self.pipeline = self.client.pipeline()
         logger.info(f"Updated mz_timestamp in Redis: {mz_timestamp}")
 
     def format_key(self, key: str) -> str:
@@ -102,13 +105,13 @@ class RedisClient:
     def set_cache(self, key: str, value: str) -> None:
         """Set a key-value pair in Redis."""
         redis_key = self.format_key(key)
-        self.client.set(redis_key, value)
+        self.pipeline.set(redis_key, value)
         logger.debug(f"Set Redis key: {redis_key} = {value}")
 
     def delete_cache(self, key: str) -> None:
         """Delete a key from Redis."""
         redis_key = self.format_key(key)
-        self.client.delete(redis_key)
+        self.pipeline.delete(redis_key)
         logger.debug(f"Deleted Redis key: {redis_key}")
 
 
@@ -122,9 +125,9 @@ def connect_to_materialize(config: Config.MaterializeConfig) -> psycopg2.extensi
         dbname=config.database,
         cursor_factory=RealDictCursor,
         application_name="mz-redis-sync",
-        ## psycopg2 does not make it easy to redirect the welcome
-        ## notice to our logger. So instead, we disable it and manually
-        ## log important details.
+        # psycopg2 does not make it easy to redirect the welcome
+        # notice to our logger. So instead, we disable it and manually
+        # log important details.
         options="--welcome_message=off"
     )
 
